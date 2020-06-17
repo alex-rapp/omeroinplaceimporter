@@ -7,3 +7,14 @@ This is a python based GUI for OMERO Inplace import workflows. The tools provide
 The server must have a permanent mount point of the file server. User righs must be set so that the omero system user as well as the inplace user have access to the image files to be loaded. Additionally an inplace user must be set up on the OMERO server that has full read/write access to the OMERO/ManagedRepository. This is described in detail here: https://docs.openmicroscopy.org/omero/5.6.1/sysadmins/in-place-import.html. 
 
 ## Installation
+
+
+add code like this
+```
+  curl -o install.R https://raw.githubusercontent.com/ome/rOMERO-gateway/master/install.R 
+  Rscript install.R
+```
+
+add images like this
+
+![Description](IPI_icon.png)
