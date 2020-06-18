@@ -11,12 +11,20 @@ The server must have a permanent mount point of the file server. User righs must
 Also make sure that the environmental variables for the inpalce user are set correctly and that the environemntal variables are available when loged in via SSH (e.g. add to .bashrc, before the interactive check).
 
 ## Installation
+On the client a pyhton3 environment is required. Additionally the following libraries are required.
 
+* omero-py
+* PyQt5
+* PyYAML
 
-add code like this
+Suggested installations use a virtual environment setup like this:
+
 ```
-  curl -o install.R https://raw.githubusercontent.com/ome/rOMERO-gateway/master/install.R 
-  Rscript install.R
+python3 -m venv omeroipi
+. omeroipi/bin/activate
+pip install omero-py==5.6.0
+pip install PyQt5
+pip install PyYAML
 ```
 
 add images like this
