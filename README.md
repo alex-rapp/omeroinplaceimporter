@@ -51,7 +51,7 @@ on the selected folder and a list of all supported files will be generated and l
 
 ![GUI scan](Doc/GUI02.png)
 
-Now enter the part of the path on your local mount point that needs to be replaced with the remote mount point (B and C). You can also select and unselect individual files in the presented tables. Add a dataset name in the second column for the files to be imported.
+Now enter the part of the path on your local mount point that needs to be replaced with the remote mount point (B and C). The logic behind this is that the entered local mountpoint string is replaced with the remote mount point, so that the result is a valid path to the intended files. After pressing "Generate Lsit" (see below) you can check if everything is correct by looking at the temp.tsv file generated in your local temp folder on the client. You can also select and unselect individual files in the presented tables. Add a dataset name in the second column for the files to be imported.
 
 Next press Generate List (D). This will compose a bulk.yaml and a ipifilelist.tsv with the provided details in your local temp directoy.
 
