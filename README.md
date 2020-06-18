@@ -33,11 +33,13 @@ Also download the OMERO Server distrubtion and add the $OMERODIR to enable comma
 Download the omeroipi.py together with the IPI_icon.png as well as Omero_logo.png to your virtual environement.
 
 ## Usage
-To start the gui of the inplace importer type inside your venv:
+To start the GUI of the inplace importer type inside your venv:
 
 ```
 python omeroipi.py
 ```
-add images like this
+This will open the GUI that looks like this:
+
+
 
 ![Description](IPI_icon.png)
