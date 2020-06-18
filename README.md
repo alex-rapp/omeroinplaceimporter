@@ -63,4 +63,5 @@ In order to facilitate the import for regular users the OMERO system admin can p
 
 ![GUI scan](GUI03.png)
 
-If you save the settings a local file (settings.p"
+If you save the settings a local file ("ipisettings.p") will be created with all the local settings. Attention, this includes also the password for the inplace user!. The next time you start the GUI it will scan the local folder for the presence of the ipisettings.p file and if present will automatically load the settings and fill the fields.
+
