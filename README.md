@@ -16,6 +16,7 @@ On the client a pyhton3 environment is required. Additionally the following libr
 * omero-py
 * PyQt5
 * PyYAML
+* paramiko
 
 Suggested installations use a virtual environment setup like this:
 
@@ -25,8 +26,18 @@ python3 -m venv omeroipi
 pip install omero-py==5.6.0
 pip install PyQt5
 pip install PyYAML
+pip install paramiko
 ```
+Also download the OMERO Server distrubtion and add the $OMERODIR to enable command line import as described here: https://docs.openmicroscopy.org/omero/5.6.1/users/cli/installation.html.
 
+Download the omeroipi.py together with the IPI_icon.png as well as Omero_logo.png to your virtual environement.
+
+## Usage
+To start the gui of the inplace importer type inside your venv:
+
+```
+python omeroipi.py
+```
 add images like this
 
 ![Description](IPI_icon.png)
