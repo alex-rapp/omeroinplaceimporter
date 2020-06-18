@@ -40,6 +40,27 @@ python omeroipi.py
 ```
 This will open the GUI that looks like this:
 
+![GUI first start](GUI01.png)
 
+Select the folder on the mounted file server that contain the images to be imported in OMERO. You can also set the scan depth for number of subfolders to be included (A).
+This will invoce the command 
+```
+omero import -f
+```
+on the selected folder and a list of all supported files will be generated and listed as shown below.
 
-![Description](IPI_icon.png)
+![GUI scan](GUI02.png)
+
+Now enter the part of the path on your local mount point that needs to be replaced with the remote mount point (B and C). You can also select and unselect individual files in the presented tables. Add a dataset name in the second column for the files to be imported.
+
+Next press Generate List (D). This will compose a bulk.yaml and a ipifilelist.tsv with the provided details in your local temp directoy.
+
+Finally provide the user name and password of the OMERO inplace user (D and E) as well as the servers IP or name (F) and the Omero user name for which the import should be performed (G).
+
+Press Start to initialise the import. For that the bulk.yml and ipifilelist.tsv are uploaded to the server and a bulk import is started using a SSH command from the inplace user. Depending on the amount of data to be imported the OMERO IPI Tool will show activity for some time.
+
+In order to facilitate the import for regular users the OMERO system admin can provide all the settings. This is done by clicking "Settings" so a new window will open. Here again the same settings can be entered and saved.
+
+![GUI scan](GUI03.png)
+
+If you save the settings a local file (settings.p"
