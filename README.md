@@ -55,13 +55,15 @@ Now enter the part of the path on your local mount point that needs to be replac
 
 Next press Generate List (D). This will compose a bulk.yaml and a ipifilelist.tsv with the provided details in your local temp directoy.
 
-Finally provide the user name and password of the OMERO inplace user (D and E) as well as the servers IP or name (F) and the Omero user name for which the import should be performed (G).
+Finally provide the user name and password of the OMERO inplace user (E and F) as well as the servers IP or name (G) and the Omero user name for which the import should be performed (H).
+
+![GUI scan](GUI03.png)
 
 Press Start to initialise the import. For that the bulk.yml and ipifilelist.tsv are uploaded to the server and a bulk import is started using a SSH command from the inplace user. Depending on the amount of data to be imported the OMERO IPI Tool will show activity for some time.
 
 In order to facilitate the import for regular users the OMERO system admin can provide all the settings. This is done by clicking "Settings" so a new window will open. Here again the same settings can be entered and saved.
 
-![GUI scan](GUI03.png)
+![GUI scan](GUI04.png)
 
-If you save the settings a local file ("ipisettings.p") will be created with all the local settings. Attention, this includes also the password for the inplace user!. The next time you start the GUI it will scan the local folder for the presence of the ipisettings.p file and if present will automatically load the settings and fill the fields.
+If you save the settings a local file ("ipisettings.p") will be created with all the local settings. ATTENTION, this includes also the password for the inplace user!. The next time you start the GUI it will scan the local folder for the presence of the ipisettings.p file and if present will automatically load the settings and fill the fields.
 
