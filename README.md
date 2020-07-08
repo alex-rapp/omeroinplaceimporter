@@ -28,7 +28,6 @@ pip install PyQt5
 pip install PyYAML
 pip install paramiko
 ```
-Also download the OMERO Server distrubtion and add the $OMERODIR to enable command line import as described here: https://docs.openmicroscopy.org/omero/5.6.1/users/cli/installation.html.
 
 Download the omeroipi.py together with the IPI_icon.png as well as Omero_logo.png to your virtual environement.
 
