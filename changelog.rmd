@@ -13,4 +13,4 @@
   https://stackoverflow.com/questions/62770315/pyqt5-update-replace-a-qtablewidget-inside-a-qscrollarea?answertab=votes#tab-top
 
 ## 2020-07-08: v05
-* added a drop down user list, that is populated from the omero server by running "omero user list", this is to prevent empty entries or mistyped users
+* added a drop down user list, that is populated from the omero server by running "omero user list", this is to prevent empty entries or miss typed users
