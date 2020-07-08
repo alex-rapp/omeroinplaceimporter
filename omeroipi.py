@@ -26,6 +26,7 @@ import platform
 import subprocess
 import paramiko
 import omero
+from random import randint
 from omero.gateway import BlitzGateway
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QPushButton, QScrollArea, QVBoxLayout, QCheckBox, QInputDialog, QLineEdit, QComboBox, QMessageBox, QWidget, QDialog
@@ -35,9 +36,12 @@ from PyQt5.QtGui import QPixmap, QIcon
 
 
 LastStateRole = QtCore.Qt.UserRole
+sessionID = str(randint(10000, 99999))
 
 global tempdir
 tempdir = '/tmp' if platform.system() == 'Darwin' else tempfile.gettempdir()
+global userList
+userList = ['Default']
 
 class Ui_omeroipi(object):
     def createFileTable(self, fileList):
@@ -56,16 +60,60 @@ class Ui_omeroipi(object):
             self.fileTable.setItem(l,2,QTableWidgetItem(nameString))
             self.fileTable.setItem(l,3,QTableWidgetItem(fileList[l]))
         self.fileTable.setColumnWidth(0,40)
-        self.fileTable.setColumnWidth(0,80)    
-        self.layout = QVBoxLayout(self.scrollArea)
-        self.layout.addWidget(self.fileTable)
+        self.fileTable.setColumnWidth(0,80)
+        if self.table_place_holder_layout.count():
+            self.table_place_holder_layout.takeAt(0).widget().deleteLater()
+        self.table_place_holder_layout.addWidget(self.fileTable)
+
+    def toggleChekbox(self):
+        times = 1
+        self.fileTable = QTableWidget()
+        if (times % 2) == 0:
+            for l in range (len(fileList)):
+                #item = QtWidgets.QTableWidgetItem()
+                #item.setCheckState(QtCore.Qt.Unchecked)
+                #item.setData(LastStateRole, item.uncheckState())
+                #self.fileTable.item(l,0).setChecked(True)
+                self.fileTable.item(l,0).setCheckState(True)
+                times = times +1
+        else:
+            for l in range (len(fileList)):
+                #item = QtWidgets.QTableWidgetItem()
+                #item.setCheckState(QtCore.Qt.Checked)
+                #item.setData(LastStateRole, item.checkState())
+                #self.fileTable.item(l,0).setChecked(False)
+                self.fileTable.item(l,0).setCheckState(False)
+                times = times +1
+
+    def showDialog(self):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setText("A User is reqwuired for the import")
+        msg.setWindowTitle("Warning")
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()
+        
+    def fileListMissing(self):
+        flm = QMessageBox()
+        flm.setIcon(QMessageBox.Warning)
+        flm.setText("You need to generate the filelist befor starting the upload")
+        flm.setWindowTitle("Warning")
+        flm.setStandardButtons(QMessageBox.Ok)
+        flm.exec_()
+    def settingsWarning(self):
+        setw = QMessageBox()
+        setw.setIcon(QMessageBox.Warning)
+        setw.setText("No settings file was found, please enter the settings first, save them and restart the App")
+        setw.setWindowTitle("Warning")
+        setw.setStandardButtons(QMessageBox.Ok)
+        setw.exec_()
 
     def buildIPIfileList(self):
         global fileList
         newFileList = []
         lMount = self.localMount.text()
         rMount = self.remoteMount.text()
-        temp_tsv = open(tempdir + os.sep + "temp.tsv", "w")
+        temp_tsv = open(tempdir + os.sep + "ipimp"+sessionID+".tsv", "w")
         # print(fileList)										For debugging only
         for row in range (len(fileList)):
             if self.fileTable.item(row,0).checkState() == QtCore.Qt.Checked:
@@ -78,14 +126,14 @@ class Ui_omeroipi(object):
                 temp_tsv.write(importLine + '\n')
         temp_tsv.close()
         ## write the YAML file
-        yamlFile = open(tempdir + os.sep + "temp.yml", "w")
+        yamlFile = open(tempdir + os.sep + "temp"+sessionID+".yml", "w")
         yamlFile.write("---\n")
         yamlFile.write("continue: \"true\"\n")
         yamlFile.write("transfer: \"ln_s\"\n")
         yamlFile.write("checksum_algorithm: \"File-Size-64\"\n")
         yamlFile.write("logprefix: \"logs/\"\n")
         yamlFile.write("output: \"yaml\"\n")
-        yamlFile.write("path: \"/OMERO/ManagedRepository/ipimp.tsv\"\n")
+        yamlFile.write("path: \"/OMERO/ManagedRepository/ipimp"+sessionID+".tsv\"\n")
         yamlFile.write("columns:\n")
         yamlFile.write("   - target\n") # use three blanks, no tab!
         yamlFile.write("   - name\n")
@@ -96,65 +144,98 @@ class Ui_omeroipi(object):
         # clear existing file tables                                                       ## TODO
         directory = str(QtWidgets.QFileDialog.getExistingDirectory())
         self.importPath.setText('{}'.format(directory))
+        lMount = self.localMount.text()
+        rMount = self.remoteMount.text()
+        inplaceUserField = self.inplaceUser.text()
+        inplacePassField = self.inplacePW.text()
+        serverField = self.OServer.text()
+        remDirectory = directory.replace(lMount, rMount, 1)
+        print(remDirectory)
         fDepth = self.folderDepth.currentText()
         if fDepth == ">3":
             fDepth = "7"
-        scanString = 'omero import -f --depth ' +fDepth+ ' \''+ directory+'\''
+        scanString = 'omero import -f --depth ' +fDepth+ ' \''+ remDirectory+'\''
         proc=subprocess.Popen(scanString, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
         output=proc.communicate()[0]
         #print(output) 										For debugging only
         global fileList
         fileList = []
-        for line in output.splitlines():
-            if not line.startswith('#'):
-                print(line)
-                fileList.append(line)
-        self.createFileTable(fileList)
-
-    def startOmeroImport(self):
-        inplaceUserField = self.inplaceUser.text()
-        inplacePassField = self.inplacePW.text()
-        serverField = self.OServer.text()
-        targetUserField = self.TargetUser.text()
-        importString = "omero import --sudo "+ inplaceUserField + " -w " + inplacePassField+ " -s \"" + serverField + "\" -u " + targetUserField + " --bulk /OMERO/ManagedRepository/bulki.yml"
-        # print(importString) 										For debugging only
-        # open the ssh and transfer the bulk and yaml files
-        source1 = tempdir + os.sep +"temp.tsv"
-        dest1 = "/OMERO/ManagedRepository/ipimp.tsv"
-        source2 = tempdir + os.sep +"temp.yml"
-        dest2 = "/OMERO/ManagedRepository/bulki.yml"
-        try:
-            t = paramiko.Transport((serverField))
-            t.connect(username=inplaceUserField, password=inplacePassField)
-            sftp = paramiko.SFTPClient.from_transport(t)
-            # upload the tsv file
-            sftp.put(source1, dest1, callback=None, confirm=True)
-            # upload the yml file
-            sftp.put(source2, dest2, callback=None, confirm=True)
-        finally:
-            t.close()
-            print("bulk uploaded")
-        #### issue the import command
         try:
             client = paramiko.SSHClient()
             client.load_system_host_keys()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             client.set_missing_host_key_policy(paramiko.WarningPolicy)
             client.connect(hostname=serverField, username=inplaceUserField, password=inplacePassField)
-            stdin, stdout, stderr = client.exec_command("omero import --sudo "+ inplaceUserField + " -w " + inplacePassField + " -s "+ serverField + " -u " + targetUserField + " --bulk /OMERO/ManagedRepository/bulki.yml")
+            stdin, stdout, stderr = client.exec_command(scanString)
             stdout.channel.recv_exit_status()
             lines = stdout.readlines()
-            #for line in lines:										For debugging only
-            #    print(lines)
-        except AuthenticationException:
-            print("Authentication failed, please verify your credentials: %s")
-        except SSHException as sshException:
-            print("Unable to establish SSH connection: %s" % sshException)
-        except BadHostKeyException as badHostKeyException:
-            print("Unable to verify server's host key: %s" % badHostKeyException)
+            for line in lines:
+                singleLines = line.splitlines()
+                for l in singleLines:
+                    if not l.startswith('#'):
+                        print(l)
+                        fileList.append(l)
         finally:
             client.close()
-            print("import done")
+            print("filelist read")
+        self.createFileTable(fileList)
+
+    def startOmeroImport(self):
+        inplaceUserField = self.inplaceUser.text()
+        inplacePassField = self.inplacePW.text()
+        serverField = self.OServer.text()
+        targetUserField = str(self.TargetUser.currentText())
+        if len(targetUserField) != 0:
+            bulkPath = tempdir + os.sep + "ipimp"+sessionID+".tsv"
+            if os.path.isfile(bulkPath) == 1:
+                importString = "omero import --sudo "+ inplaceUserField + " -w " + inplacePassField+ " -s \"" + serverField + "\" -u " + targetUserField + " --bulk /OMERO/ManagedRepository/bulki.yml"
+                # print(importString) 										For debugging only
+                # open the ssh and transfer the bulk and yaml files
+                source1 = tempdir + os.sep +"ipimp"+sessionID+".tsv"
+                dest1 = "/OMERO/ManagedRepository/ipimp"+sessionID+".tsv"
+                source2 = tempdir + os.sep +"temp"+sessionID+".yml"
+                dest2 = "/OMERO/ManagedRepository/bulki"+sessionID+".yml"
+                try:
+                    t = paramiko.Transport((serverField))
+                    t.connect(username=inplaceUserField, password=inplacePassField)
+                    sftp = paramiko.SFTPClient.from_transport(t)
+                    # upload the tsv file
+                    sftp.put(source1, dest1, callback=None, confirm=True)
+                    # upload the yml file
+                    sftp.put(source2, dest2, callback=None, confirm=True)
+                finally:
+                    t.close()
+                    print("bulk uploaded")
+                #### issue the import command
+                try:
+                    client = paramiko.SSHClient()
+                    client.load_system_host_keys()
+                    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    client.set_missing_host_key_policy(paramiko.WarningPolicy)
+                    client.connect(hostname=serverField, username=inplaceUserField, password=inplacePassField)
+                    stdin, stdout, stderr = client.exec_command("omero import --sudo "+ inplaceUserField + " -w " + inplacePassField + " -s "+ serverField + " -u " + targetUserField + " --bulk /OMERO/ManagedRepository/bulki"+sessionID+".yml")
+                    stdout.channel.recv_exit_status()
+                    lines = stdout.readlines()
+                    for line in lines:#										For debugging only
+                        print(lines)
+                except AuthenticationException:
+                    print("Authentication failed, please verify your credentials: %s")
+                except SSHException as sshException:
+                    print("Unable to establish SSH connection: %s" % sshException)
+                except BadHostKeyException as badHostKeyException:
+                    print("Unable to verify server's host key: %s" % badHostKeyException)
+                finally:
+                    client.close()
+                    print("import done")
+                    ## remove the old local yml and tsv files
+                    os.remove(tempdir + os.sep +"ipimp"+sessionID+".tsv")
+                    os.remove(tempdir + os.sep +"temp"+sessionID+".yml")
+                    print("files clear")
+            else:
+                self.fileListMissing()
+        else:
+            print("no user found")
+            self.showDialog()
 
     def setupUi(self, omeroipi):
         omeroipi.setObjectName("OMERO IPI Tool")
@@ -219,12 +300,16 @@ class Ui_omeroipi(object):
         self.generateList.setGeometry(QtCore.QRect(420,50,90,20))
         self.generateList.clicked.connect(self.buildIPIfileList)
         
+        #self.Toggle = QPushButton(omeroipi)
+        #self.Toggle.setStyleSheet('QPushButton {color: black;}')
+        #self.Toggle.setText("Toggle")
+        #self.Toggle.setGeometry(QtCore.QRect(10,70,90,20))
+        #self.Toggle.clicked.connect(self.toggleChekbox)
+        
         #### line 3
-        self.scrollArea = QScrollArea(omeroipi)
-        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setGeometry(QtCore.QRect(10, 100, 880, 400))
+        self.table_place_holder = QtWidgets.QWidget(omeroipi)
+        self.table_place_holder_layout = QVBoxLayout(self.table_place_holder)
+        self.table_place_holder.setGeometry(QtCore.QRect(10,100,880,400))
         
         #### line 4
         self.label4 = QtWidgets.QLabel(omeroipi)
@@ -262,11 +347,12 @@ class Ui_omeroipi(object):
         self.label7.setText('Target User')
         self.label7.setGeometry(QtCore.QRect(590,520,90,20))
         self.label7.setObjectName("Label7")
-
-        self.TargetUser = QtWidgets.QLineEdit(omeroipi)
+        
+        self.TargetUser = QComboBox(omeroipi)
         self.TargetUser.setEnabled(True)
         self.TargetUser.setGeometry(QtCore.QRect(680, 520, 110, 20))
         self.TargetUser.setObjectName("TargetUser")
+        self.TargetUser.addItems(userList)
         
         #### line 5
         self.label8 =  QtWidgets.QLabel(omeroipi)
@@ -306,7 +392,34 @@ class Ui_omeroipi(object):
             self.inplaceUser.setText(read_settings["inplaceUser"])
             self.inplacePW.setText(read_settings["inplacePass"])
             self.OServer.setText(read_settings["OmeroServer"])
-        
+            # generate the user list from the omero server
+            inplaceUserField = self.inplaceUser.text()
+            inplacePassField = self.inplacePW.text()
+            serverField = self.OServer.text()
+            try:
+                client = paramiko.SSHClient()
+                client.load_system_host_keys()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                client.set_missing_host_key_policy(paramiko.WarningPolicy)
+                client.connect(hostname=serverField, username=inplaceUserField, password=inplacePassField)
+                listUserString = "omero user list --style plain -u " + inplaceUserField + " -w " + inplacePassField + " -s "+ serverField
+                stdin, stdout, stderr = client.exec_command(listUserString)
+                stdout.channel.recv_exit_status()
+                lines = stdout.readlines()
+                for line in lines:
+                    cells = line.split(',')
+                    if len(cells)>2:
+                        userList.append(cells[1])
+                userList.remove('root')
+                userList.remove('guest')
+                userList.remove('inplace')
+                self.TargetUser.addItems(userList)
+            finally:
+                client.close()
+                print("user list imported")
+        else:
+            self.settingsWarning()
+            
         self.retranslateUi(omeroipi)
         QtCore.QMetaObject.connectSlotsByName(omeroipi)
 
