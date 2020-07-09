@@ -14,3 +14,6 @@
 
 ## 2020-07-08: v05
 * added a drop down user list, that is populated from the omero server by running "omero user list", this is to prevent empty entries or miss typed users
+
+## 2020-07-09: v06
+* added the option to set the imported images to read only on the file server. This feature requries that the users is the owner of the files and has read/write permission.
