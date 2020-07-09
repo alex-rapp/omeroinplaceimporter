@@ -22,6 +22,7 @@ import time
 import pickle
 import ntpath
 import os
+from stat import S_IREAD, S_IRGRP, S_IROTH
 import platform
 import subprocess
 import paramiko
@@ -41,7 +42,7 @@ sessionID = str(randint(10000, 99999))
 global tempdir
 tempdir = '/tmp' if platform.system() == 'Darwin' else tempfile.gettempdir()
 global userList
-userList = ['Default']
+userList = ['']
 
 class Ui_omeroipi(object):
     def createFileTable(self, fileList):
@@ -185,6 +186,8 @@ class Ui_omeroipi(object):
         inplacePassField = self.inplacePW.text()
         serverField = self.OServer.text()
         targetUserField = str(self.TargetUser.currentText())
+        lMount = self.localMount.text()
+        rMount = self.remoteMount.text()
         if len(targetUserField) != 0:
             bulkPath = tempdir + os.sep + "ipimp"+sessionID+".tsv"
             if os.path.isfile(bulkPath) == 1:
@@ -231,6 +234,17 @@ class Ui_omeroipi(object):
                     os.remove(tempdir + os.sep +"ipimp"+sessionID+".tsv")
                     os.remove(tempdir + os.sep +"temp"+sessionID+".yml")
                     print("files clear")
+                    ## set files to read only
+                    if self.ROchBx.isChecked():
+                        print("putting files to read only")
+                        for row in range (len(fileList)):
+                            if self.fileTable.item(row,0).checkState() == QtCore.Qt.Checked:
+                                # retranslate file path
+                                string = fileList[row]
+                                string2 = string.replace(rMount, lMount, 1)
+                                os.chmod(string2, S_IREAD|S_IRGRP|S_IROTH)
+                                print("changed: "+string2)
+                        print("changed to read only done")
             else:
                 self.fileListMissing()
         else:
@@ -372,6 +386,14 @@ class Ui_omeroipi(object):
         self.closeAll.setGeometry(QtCore.QRect(240,550,90,20))
         self.closeAll.clicked.connect(app.instance().quit)
         
+        self.label9 =  QtWidgets.QLabel(omeroipi)
+        self.label9.setText('Make Readonly')
+        self.label9.setGeometry(QtCore.QRect(390,550,100,20))
+        self.label9.setObjectName("Label9")
+        
+        self.ROchBx = QCheckBox("Title", omeroipi)
+        self.ROchBx.setGeometry(QtCore.QRect(495,550,20,20))
+        
         self.label10 =  QtWidgets.QLabel(omeroipi)
         self.label10.setText('Server Settings')
         self.label10.setGeometry(QtCore.QRect(590,550,110,20))
@@ -413,6 +435,7 @@ class Ui_omeroipi(object):
                 userList.remove('root')
                 userList.remove('guest')
                 userList.remove('inplace')
+                userList.remove('')
                 self.TargetUser.addItems(userList)
             finally:
                 client.close()
@@ -495,7 +518,6 @@ class Ui_omeroipi(object):
         self.SettingsClose.setStyleSheet('QPushButton {color: black;}')
         self.SettingsClose.setText("Close")
         self.SettingsClose.setGeometry(QtCore.QRect(200,230,90,20))
-        #self.SettingsClose.clicked.connect(settingsW.close())
         self.SettingsClose.clicked.connect(settingsW.accept)
         
         settingsW.exec_()
