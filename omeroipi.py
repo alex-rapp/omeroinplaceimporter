@@ -32,7 +32,7 @@ from omero.gateway import BlitzGateway
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QPushButton, QScrollArea, QVBoxLayout, QCheckBox, QInputDialog, QLineEdit, QComboBox, QMessageBox, QWidget, QDialog
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem, QLabel
+from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QLabel
 from PyQt5.QtGui import QPixmap, QIcon
 
 
@@ -134,7 +134,7 @@ class Ui_omeroipi(object):
         yamlFile.write("checksum_algorithm: \"File-Size-64\"\n")
         yamlFile.write("logprefix: \"logs/\"\n")
         yamlFile.write("output: \"yaml\"\n")
-        yamlFile.write("path: \"/OMERO/ManagedRepository/ipimp"+sessionID+".tsv\"\n")
+        yamlFile.write("path: \"/tmp/ipimp"+sessionID+".tsv\"\n")
         yamlFile.write("columns:\n")
         yamlFile.write("   - target\n") # use three blanks, no tab!
         yamlFile.write("   - name\n")
@@ -156,12 +156,13 @@ class Ui_omeroipi(object):
         if fDepth == ">3":
             fDepth = "7"
         scanString = 'omero import -f --depth ' +fDepth+ ' \''+ remDirectory+'\''
-        proc=subprocess.Popen(scanString, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
-        output=proc.communicate()[0]
+        # proc=subprocess.Popen(scanString, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
+        # output=proc.communicate()[0]
         #print(output) 										For debugging only
         global fileList
         fileList = []
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             client = paramiko.SSHClient()
             client.load_system_host_keys()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -178,6 +179,7 @@ class Ui_omeroipi(object):
                         fileList.append(l)
         finally:
             client.close()
+            QApplication.restoreOverrideCursor()
             print("filelist read")
         self.createFileTable(fileList)
 
@@ -191,14 +193,15 @@ class Ui_omeroipi(object):
         if len(targetUserField) != 0:
             bulkPath = tempdir + os.sep + "ipimp"+sessionID+".tsv"
             if os.path.isfile(bulkPath) == 1:
-                importString = "omero import --sudo "+ inplaceUserField + " -w " + inplacePassField+ " -s \"" + serverField + "\" -u " + targetUserField + " --bulk /OMERO/ManagedRepository/bulki.yml"
+                importString = "omero import --sudo "+ inplaceUserField + " -w " + inplacePassField+ " -s \"" + serverField + "\" -u " + targetUserField + " --bulk /tmp/bulki.yml"
                 # print(importString) 										For debugging only
                 # open the ssh and transfer the bulk and yaml files
                 source1 = tempdir + os.sep +"ipimp"+sessionID+".tsv"
-                dest1 = "/OMERO/ManagedRepository/ipimp"+sessionID+".tsv"
+                dest1 = "/tmp/ipimp"+sessionID+".tsv"
                 source2 = tempdir + os.sep +"temp"+sessionID+".yml"
-                dest2 = "/OMERO/ManagedRepository/bulki"+sessionID+".yml"
+                dest2 = "/tmp/bulki"+sessionID+".yml"
                 try:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
                     t = paramiko.Transport((serverField))
                     t.connect(username=inplaceUserField, password=inplacePassField)
                     sftp = paramiko.SFTPClient.from_transport(t)
@@ -216,7 +219,7 @@ class Ui_omeroipi(object):
                     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                     client.set_missing_host_key_policy(paramiko.WarningPolicy)
                     client.connect(hostname=serverField, username=inplaceUserField, password=inplacePassField)
-                    stdin, stdout, stderr = client.exec_command("omero import --sudo "+ inplaceUserField + " -w " + inplacePassField + " -s "+ serverField + " -u " + targetUserField + " --bulk /OMERO/ManagedRepository/bulki"+sessionID+".yml")
+                    stdin, stdout, stderr = client.exec_command("omero import --sudo "+ inplaceUserField + " -w " + inplacePassField + " -s "+ serverField + " -u " + targetUserField + " --bulk /tmp/bulki"+sessionID+".yml")
                     stdout.channel.recv_exit_status()
                     lines = stdout.readlines()
                     for line in lines:#										For debugging only
@@ -229,6 +232,7 @@ class Ui_omeroipi(object):
                     print("Unable to verify server's host key: %s" % badHostKeyException)
                 finally:
                     client.close()
+                    QApplication.restoreOverrideCursor()
                     print("import done")
                     ## remove the old local yml and tsv files
                     os.remove(tempdir + os.sep +"ipimp"+sessionID+".tsv")
@@ -434,7 +438,7 @@ class Ui_omeroipi(object):
                         userList.append(cells[1])
                 userList.remove('root')
                 userList.remove('guest')
-                userList.remove('inplace')
+                userList.remove('inplace_user')
                 userList.remove('')
                 self.TargetUser.addItems(userList)
             finally:
@@ -550,3 +554,4 @@ if __name__ == "__main__":
     omeroipi.show()
 
     sys.exit(app.exec_())
+
