@@ -17,3 +17,6 @@
 
 ## 2020-07-09: v06
 * added the option to set the imported images to read only on the file server. This feature requries that the users is the owner of the files and has read/write permission.
+
+## 2021-03-01: v07
+* fixed an error where user names with spaces causes errors
