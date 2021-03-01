@@ -191,7 +191,7 @@ class Ui_omeroipi(object):
         if len(targetUserField) != 0:
             bulkPath = tempdir + os.sep + "ipimp"+sessionID+".tsv"
             if os.path.isfile(bulkPath) == 1:
-                importString = "omero import --sudo "+ inplaceUserField + " -w " + inplacePassField+ " -s \"" + serverField + "\" -u " + targetUserField + " --bulk /OMERO/ManagedRepository/bulki.yml"
+                importString = "omero import --sudo "+ inplaceUserField + " -w " + inplacePassField+ " -s \"" + serverField + "\" -u \"" + targetUserField + "\" --bulk /OMERO/ManagedRepository/bulki.yml"
                 # print(importString) 										For debugging only
                 # open the ssh and transfer the bulk and yaml files
                 source1 = tempdir + os.sep +"ipimp"+sessionID+".tsv"
@@ -216,7 +216,7 @@ class Ui_omeroipi(object):
                     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                     client.set_missing_host_key_policy(paramiko.WarningPolicy)
                     client.connect(hostname=serverField, username=inplaceUserField, password=inplacePassField)
-                    stdin, stdout, stderr = client.exec_command("omero import --sudo "+ inplaceUserField + " -w " + inplacePassField + " -s "+ serverField + " -u " + targetUserField + " --bulk /OMERO/ManagedRepository/bulki"+sessionID+".yml")
+                    stdin, stdout, stderr = client.exec_command("omero import --sudo "+ inplaceUserField + " -w " + inplacePassField + " -s "+ serverField + " -u \"" + targetUserField + "\" --bulk /OMERO/ManagedRepository/bulki"+sessionID+".yml")
                     stdout.channel.recv_exit_status()
                     lines = stdout.readlines()
                     for line in lines:#										For debugging only
